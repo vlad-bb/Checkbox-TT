@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 
 from fastapi import Depends, HTTPException, status
 from passlib.context import CryptContext
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from jose import JWTError, jwt
 
@@ -18,7 +18,7 @@ from src.conf.config import config
 
 class Auth:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+    bearer_schema = HTTPBearer()
     SECRET_KEY = config.SECRET_KEY_JWT
     ALGORITHM = config.ALGORITHM
 
@@ -117,15 +117,17 @@ class Auth:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Could not validate credentials!')
 
     async def get_current_user(
-            self, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
+            self,
+            credentials: HTTPAuthorizationCredentials = Depends(bearer_schema),
+            db: AsyncSession = Depends(get_db)
     ):
         """
         The get_current_user function is a dependency that will be used in the
             protected endpoints. It takes a token as an argument and returns the user
             if it's valid, or raises an HTTPException with status code 401 if not.
 
+        :param credentials: str: Get the token from the authorization header
         :param self: Represent the instance of a class
-        :param token: str: Get the token from the authorization header
         :param db: AsyncSession: Get the database session
         :return: A user object
         :doc-author: Babenko Vladyslav
@@ -137,6 +139,7 @@ class Auth:
         )
 
         try:
+            token = credentials.credentials
             payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
             if payload["scope"] == "access_token":
                 email = payload["sub"]
@@ -150,7 +153,9 @@ class Auth:
         return user
 
     async def get_user_info(
-            self, user_id: int, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
+            self, user_id: int,
+            credentials: HTTPAuthorizationCredentials = Depends(bearer_schema),
+            db: AsyncSession = Depends(get_db)
     ) -> schemas_user.UserResponse:
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -159,6 +164,7 @@ class Auth:
         )
 
         try:
+            token = credentials.credentials
             payload = jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
             if payload["scope"] == "access_token":
                 email = payload["sub"]

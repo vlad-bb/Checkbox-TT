@@ -53,3 +53,10 @@ class CheckResponse(BaseModel):
     total: condecimal(max_digits=10, decimal_places=2)
     rest: condecimal(max_digits=10, decimal_places=2)
     created_at: datetime
+
+class CheckResponseList(BaseModel):
+    entries: List[CheckResponse]
+    page: int
+    per_page: int
+    total: int
+

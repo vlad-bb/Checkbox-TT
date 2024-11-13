@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordRequestForm
+from fastapi.security import HTTPAuthorizationCredentials, OAuth2PasswordRequestForm
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,7 +10,7 @@ from src.schemas.user import UserSchema, UserResponse, TokenSchema, UserBase
 from src.services.auth import auth_service
 
 router = APIRouter(prefix='/auth', tags=['auth'])
-get_refresh_token = HTTPBearer()
+
 
 
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -36,7 +36,7 @@ async def signup(body: UserSchema, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenSchema)
-async def login(body: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+async def login(body: UserBase, db: AsyncSession = Depends(get_db)):
     """
     The login function is used to authenticate a user.
         It takes in the email and password of the user, and returns an access token if successful.
@@ -47,7 +47,7 @@ async def login(body: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = 
     :return: A dictionary with the following keys:
     :doc-author: Babenko Vladyslav
     """
-    user = await repositories_users.get_user_by_email(body.username, db)
+    user = await repositories_users.get_user_by_email(body.email, db)
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid registration information!")
     if not auth_service.verify_password(body.password, user.password):
@@ -60,7 +60,7 @@ async def login(body: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = 
 
 
 @router.get('/refresh_token', response_model=TokenSchema)
-async def refresh_token(credentials: HTTPAuthorizationCredentials = Depends(get_refresh_token),
+async def refresh_token(credentials: HTTPAuthorizationCredentials = Depends(auth_service.bearer_schema),
                         db: AsyncSession = Depends(get_db)):
     """
     The refresh_token function is used to refresh the access token.

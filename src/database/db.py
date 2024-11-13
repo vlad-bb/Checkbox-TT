@@ -36,14 +36,14 @@ class DatabaseSessionManager:
 
         :param self: Represent the instance of the class
         :return: A context manager, which is an object that has __enter__ and __exit__ methods
-        :doc-author: Naboka Artem
+        :doc-author: Babenko Vladyslav
         """
         if self._session_maker is None:
             raise Exception("Session is not initialized")
         session = self._session_maker()
         try:
             yield session
-        except SQLAlchemyError as err:
+        except ValueError as err:
             print(err)
             await session.rollback()
         finally:
@@ -64,4 +64,4 @@ async def get_db():
     :doc-author: Babenko Vladyslav
     """
     async with sessionmanager.session() as session:
-        return session
+        yield session
