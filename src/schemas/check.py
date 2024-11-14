@@ -31,7 +31,7 @@ class CheckRequest(BaseModel):
                 "payment": {
                     "type": "cash",
                     "amount": 896_611.50
-,
+                    ,
                 },
             }
 
@@ -46,6 +46,12 @@ class PaymentResponse(PaymentRequest):
     pass
 
 
+class ViewResponse(BaseModel):
+    link_html: str
+    link_txt: str
+    link_qr: str
+
+
 class CheckResponse(BaseModel):
     id: int
     products: List[ProductResponse]
@@ -53,10 +59,12 @@ class CheckResponse(BaseModel):
     total: condecimal(max_digits=10, decimal_places=2)
     rest: condecimal(max_digits=10, decimal_places=2)
     created_at: datetime
+    business_name: str
+    links: ViewResponse
+
 
 class CheckResponseList(BaseModel):
     entries: List[CheckResponse]
     page: int
     per_page: int
     total: int
-

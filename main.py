@@ -1,12 +1,14 @@
 import uvicorn
-from fastapi import FastAPI, Depends, HTTPException, Request, status
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi import FastAPI, Depends, HTTPException
+
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import get_db
-from src.routes import auth, check
+from src.routes import auth, check, check_view
 from src.conf.config import config
 
 app = FastAPI()
@@ -23,6 +25,12 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(check.router, prefix="/api")
+app.include_router(check_view.router)
+
+templates = Jinja2Templates(directory="src/templates")
+app.mount("/static", StaticFiles(directory="src/static"), name="static")
+app.mount("/css", StaticFiles(directory="src/static/css"), name="static")
+
 
 
 @app.get("/")
@@ -55,5 +63,5 @@ async def healthchecker(db: AsyncSession = Depends(get_db)):
 
 if __name__ == "__main__":
     uvicorn.run(
-        "main:app", host="localhost", port=8000, reload=True
+        "main:app", host=config.HOST, port=config.PORT, reload=True
     )

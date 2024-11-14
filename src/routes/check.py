@@ -1,15 +1,20 @@
+
+from fastapi.templating import Jinja2Templates
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from fastapi_filter import FilterDepends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import get_db
-from src.database.models import User, Check
+from src.database.models import User
 from src.repository import check as repository_check
 from src.services.auth import auth_service
 from src.schemas.check import CheckRequest, CheckResponse, CheckResponseList
 from src.filters.check import CheckFilter
+from src.conf.config import config
+
 
 router = APIRouter(prefix='/check', tags=['check'])
+
 
 
 @router.post("/", response_model=CheckResponse, status_code=status.HTTP_201_CREATED)
@@ -29,7 +34,7 @@ async def create_check(
 
     if rest < 0:
         raise HTTPException(status_code=400, detail="Insufficient payment amount")
-    check_id, check_created_at = await repository_check.create_check(body, current_user, total, rest, db)
+    check_id, check_created_at, business_name = await repository_check.create_check(body, current_user, total, rest, db)
     await repository_check.create_products(products=body.products, check_id=check_id, db=db)
     products_response = [
         {"name": item.name, "price": item.price, "quantity": item.quantity, "total": item.price * item.quantity}
@@ -41,7 +46,14 @@ async def create_check(
         payment=body.payment.dict(),
         total=total,
         rest=rest,
-        created_at=check_created_at
+        created_at=check_created_at,
+        business_name=business_name,
+        links={
+            "link_html": f"{config.DOMAIN}/{check_id}/html",
+            "link_txt": f"{config.DOMAIN}/{check_id}/txt",
+            "link_qr": f"{config.DOMAIN}/{check_id}/qr-code",
+        }
+
     )
     return check_response
 
@@ -66,10 +78,10 @@ async def read_check(check_id: int, db: AsyncSession = Depends(get_db),
 async def get_checks(
         check_filter: CheckFilter = FilterDepends(CheckFilter, by_alias=True),
         page: int = Query(ge=0, default=0),
-        per_page: int = Query(ge=1, le=100, default=1),
+        per_page: int = Query(ge=1, le=100, default=10),
         db: AsyncSession = Depends(get_db),
         current_user: User = Depends(auth_service.get_current_user)
-) -> list[CheckResponse]:
+) -> dict[str, int | list[CheckResponse]]:
     """
     The function use filters to return more specific results
     :param check_filter: Filter class
@@ -80,3 +92,7 @@ async def get_checks(
     print(check_filter)
     checks = await repository_check.get_checks_by_filter(check_filter, current_user, page, per_page, db)
     return checks
+
+
+
+

@@ -13,6 +13,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(50))
+    business_name: Mapped[str] = mapped_column(String(50))
     email: Mapped[str] = mapped_column(String(150), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     refresh_token: Mapped[str | None] = mapped_column(String(255), nullable=True)

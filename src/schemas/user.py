@@ -8,12 +8,14 @@ class UserBase(BaseModel):
 
 class UserSchema(UserBase):
     username: str = Field(min_length=3, max_length=50)
+    business_name: str = Field(min_length=3, max_length=50)
 
 
 class UserResponse(BaseModel):
     id: int = 1
     username: str
     email: EmailStr
+    business_name: str
     model_config = ConfigDict(from_attributes=True)
 
 

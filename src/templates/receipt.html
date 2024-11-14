@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    <meta name="description" content=""/>
+    <meta name="author" content=""/>
+    <title>Check</title>
+    <link href="/static/css/styles.css" rel="stylesheet"/>
+    <script data-search-pseudo-elements defer
+            src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/js/all.min.js"
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"
+            crossorigin="anonymous"></script>
+</head>
+<body>
+<br>
+<div class="center"><strong>{{ business_name }}</strong></div>
+<div class="separator"></div>
+
+{% for item in items %}
+<div class="item">
+    <div>{{ item.quantity }} x {{ "{:,.2f}".format(item.price) }}</div>
+    <div>{{ item.name }} <span class="right">{{ "{:,.2f}".format(item.quantity * item.price) }}</span></div>
+
+</div>
+{% if not loop.last %}
+<div class="line"></div>
+{% endif %}
+{% endfor %}
+
+<div class="separator"></div>
+<div class="total">СУМА <span class="right">{{ "{:,.2f}".format(total) }}</span></div>
+<div class="total">{{ payment_method }} <span class="right">{{ "{:,.2f}".format(total) }}</span></div>
+<div class="total">Решта <span class="right">{{ "{:,.2f}".format(change) }}</span></div>
+<div class="separator"></div>
+
+<div class="center">
+    <div>{{ current_time }}</div>
+    <div>Дякуємо за покупку!</div>
+</div>
+</body>
+</html>

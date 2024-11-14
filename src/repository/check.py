@@ -10,7 +10,8 @@ from sqlalchemy.orm import selectinload
 from src.database.db import get_db
 from src.database.models import User, Product, Check
 from src.filters.check import CheckFilter
-from src.schemas.check import CheckRequest, CheckResponse, ProductResponse, PaymentResponse, CheckResponseList
+from src.schemas.check import CheckRequest, CheckResponse, ProductResponse, PaymentResponse
+from src.conf.config import config
 
 
 async def create_products(products: list, check_id: int, db: AsyncSession) -> None:
@@ -40,7 +41,7 @@ async def create_check(body: CheckRequest, current_user: User, total: float, res
     :return: The newly created check object
     :doc-author: Babenko Vladyslav
     """
-
+    business_name = current_user.business_name
     new_check = Check(
         user_id=current_user.id,
         payment_type=body.payment.type,
@@ -51,10 +52,10 @@ async def create_check(body: CheckRequest, current_user: User, total: float, res
     db.add(new_check)
     await db.commit()
     await db.refresh(new_check)
-    return new_check.id, new_check.created_at
+    return new_check.id, new_check.created_at, business_name
 
 
-async def get_check_by_id(check_id: int, user: User, db: AsyncSession = Depends(get_db)) -> CheckResponse | None:
+async def get_check_by_id(check_id: int, user: User = None, db: AsyncSession = Depends(get_db)) -> CheckResponse | None:
     """
     Get a check by ID.
 
@@ -63,10 +64,11 @@ async def get_check_by_id(check_id: int, user: User, db: AsyncSession = Depends(
     :param db: AsyncSession: The database session
     :return: CheckResponse: The CheckResponse object or None
     """
-    filter_check = select(Check).options(
-        selectinload(Check.user),
-        selectinload(Check.products)
-    ).filter_by(id=check_id, user_id=user.id)
+    select_check = select(Check).options(selectinload(Check.user), selectinload(Check.products))
+    if user:
+        filter_check = select_check.filter_by(id=check_id, user_id=user.id)
+    else:
+        filter_check = select_check.filter_by(id=check_id)
     check_expression = await db.execute(filter_check)
     check = check_expression.scalar_one_or_none()
     if check is None:
@@ -87,7 +89,13 @@ async def get_check_by_id(check_id: int, user: User, db: AsyncSession = Depends(
                  "amount": check.payment_amount},
         total=check.total,
         rest=check.rest,
-        created_at=check.created_at
+        created_at=check.created_at,
+        business_name=check.user.business_name,
+        links={
+            "link_html": f"{config.DOMAIN}/{check.id}/html",
+            "link_txt": f"{config.DOMAIN}/{check.id}/txt",
+            "link_qr": f"{config.DOMAIN}/{check.id}/qr-code",
+        }
     )
 
 
@@ -96,6 +104,8 @@ async def get_checks_by_filter(check_filter: CheckFilter,
                                db: AsyncSession = Depends(get_db)) -> dict[str, int | list[CheckResponse]]:
     """
     Get checks by filters
+    :param page: Current page
+    :param per_page: Items per page
     :param check_filter: Filter class
     :param user: Current user from the database
     :param db: AsyncSession: The database session
@@ -123,6 +133,11 @@ async def get_checks_by_filter(check_filter: CheckFilter,
             type=check.payment_type,
             amount=check.payment_amount
         )
+        links = {
+            "link_html": f"{config.DOMAIN}/{check.id}/html",
+            "link_txt": f"{config.DOMAIN}/{check.id}/txt",
+            "link_qr": f"{config.DOMAIN}/{check.id}/qr-code",
+        }
 
         check_response = CheckResponse(
             id=check.id,
@@ -130,7 +145,9 @@ async def get_checks_by_filter(check_filter: CheckFilter,
             payment=payment_response,
             total=check.total,
             rest=check.rest,
-            created_at=check.created_at
+            created_at=check.created_at,
+            business_name=check.user.business_name,
+            check_link=links
         )
 
         check_responses.append(check_response)
