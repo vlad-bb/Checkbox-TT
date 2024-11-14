@@ -14,6 +14,7 @@ from src.database.db import get_db
 from src.repository import users as repository_users
 from src.schemas import user as schemas_user
 from src.conf.config import config
+from src.conf import messages
 
 
 class Auth:
@@ -112,9 +113,9 @@ class Auth:
             if payload['scope'] == 'refresh_token':
                 email = payload['sub']
                 return email
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid scope for token!')
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=messages.SCOPE_INVALID)
         except JWTError:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Could not validate credentials!')
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=messages.CREDENTIALS_INVALID)
 
     async def get_current_user(
             self,
@@ -179,7 +180,7 @@ class Auth:
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found",
+                detail=messages.NOT_CONTACT,
             )
 
         user_response = schemas_user.UserResponse(

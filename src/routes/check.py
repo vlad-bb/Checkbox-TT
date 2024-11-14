@@ -11,6 +11,7 @@ from src.services.auth import auth_service
 from src.schemas.check import CheckRequest, CheckResponse, CheckResponseList
 from src.filters.check import CheckFilter
 from src.conf.config import config
+from src.conf import messages
 
 
 router = APIRouter(prefix='/check', tags=['check'])
@@ -33,7 +34,7 @@ async def create_check(
     rest = body.payment.amount - total
 
     if rest < 0:
-        raise HTTPException(status_code=400, detail="Insufficient payment amount")
+        raise HTTPException(status_code=400, detail=messages.PAYMENT_AMOUNT_INVALID)
     check_id, check_created_at, business_name = await repository_check.create_check(body, current_user, total, rest, db)
     await repository_check.create_products(products=body.products, check_id=check_id, db=db)
     products_response = [
@@ -89,7 +90,6 @@ async def get_checks(
     :param current_user: Get the current user from the database
     :return: List with CheckResponse objects
     """
-    print(check_filter)
     checks = await repository_check.get_checks_by_filter(check_filter, current_user, page, per_page, db)
     return checks
 

@@ -1,4 +1,5 @@
 from datetime import  datetime
+
 from sqlalchemy import  String, DateTime, Integer, ForeignKey, Numeric, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship, DeclarativeBase
 
@@ -17,8 +18,8 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(150), nullable=False, unique=True)
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     refresh_token: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.timezone("Europe/Kyiv", func.now()))
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.timezone("Europe/Kyiv", func.now()), onupdate=func.timezone("Europe/Kyiv", func.now()))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), onupdate=func.now())
     checks: Mapped[list["Check"]] = relationship("Check", back_populates="user")
 
 
@@ -27,7 +28,7 @@ class Check(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.timezone("Europe/Kyiv", func.now()))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     payment_type: Mapped[str] = mapped_column(String(10), nullable=False)
     payment_amount: Mapped[Numeric] = mapped_column(Numeric(10, 2), nullable=False)
     total: Mapped[Numeric] = mapped_column(Numeric(10, 2), nullable=False)

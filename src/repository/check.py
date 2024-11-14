@@ -147,7 +147,7 @@ async def get_checks_by_filter(check_filter: CheckFilter,
             rest=check.rest,
             created_at=check.created_at,
             business_name=check.user.business_name,
-            check_link=links
+            links=links
         )
 
         check_responses.append(check_response)

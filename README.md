@@ -10,11 +10,31 @@ REST API для створення та перегляду чеків з реє�
 
 ### Activate Docker
 
-### Run Docker Compose
+### Run Docker Compose with Postgres DB
 ```docker-compose up -d```
+
+### Create virtual enviroment
+```python -m venv .venv```
+
+### Activate virtual enviroment
+#### for macos/linux
+```source .venv/bin/activate```
+#### for Windows
+```.venv\Scripts\activate```
+
+### Install packages from requirements.txt
+```pip install -r requirements.txt```
+
+### Run FastApi App
+```python main.py```
 
 ### Follow next link
 ```http://localhost:8000/docs```
 
 ### Exit and close app
 ```docker-compose down```
+
+
+
+## Run tests
+```pytest -v tests```
